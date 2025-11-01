@@ -1,21 +1,30 @@
 import React, { useState } from "react";
-import { FlatList, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../store";
 import { setPlan } from "../../store/slices/planSlice";
 
 export default function PlanScreen() {
-  const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
   const existingPlan = useSelector((state: RootState) => state.plan.plan);
+
+  const [step, setStep] = useState(1);
 
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [bmi, setBmi] = useState<number | null>(null);
+
   const [goal, setGoal] = useState("Build Muscle");
   const [equipment, setEquipment] = useState("Home (Bodyweight)");
-
-  const [bmi, setBmi] = useState<number | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
 
   const calculateBMI = () => {
@@ -29,14 +38,33 @@ export default function PlanScreen() {
   const generatePlan = () => {
     calculateBMI();
     const mockPlan = [
-      { id: 1, day: "Monday", workouts: [{ name: "Push-ups", sets: 3, reps: 12 }, { name: "Squats", sets: 3, reps: 15 }] },
-      { id: 2, day: "Tuesday", workouts: [{ name: "Pull-ups", sets: 3, reps: 10 }, { name: "Lunges", sets: 3, reps: 12 }] },
+      {
+        id: 1,
+        day: "Monday",
+        workouts: [
+          { name: "Push-ups", sets: 3, reps: 12 },
+          { name: "Squats", sets: 3, reps: 15 },
+        ],
+      },
+      {
+        id: 2,
+        day: "Tuesday",
+        workouts: [
+          { name: "Pull-ups", sets: 3, reps: 10 },
+          { name: "Lunges", sets: 3, reps: 12 },
+        ],
+      },
     ];
     dispatch(setPlan(mockPlan));
     setIsGenerated(true);
+    setStep(3);
   };
 
-  const renderOption = (options: string[], selected: string, setSelected: (val: string) => void) => (
+  const renderOption = (
+    options: string[],
+    selected: string,
+    setSelected: (val: string) => void
+  ) => (
     <FlatList
       horizontal
       data={options}
@@ -46,67 +74,134 @@ export default function PlanScreen() {
       renderItem={({ item }) => (
         <TouchableOpacity
           onPress={() => setSelected(item)}
-          className={`px-5 py-3 rounded-full ${selected === item ? "bg-emerald-500" : "bg-gray-200"}`}
+          className={`px-5 py-3 rounded-full ${
+            selected === item ? "bg-emerald-500" : "bg-gray-200"
+          }`}
         >
-          <Text className={`${selected === item ? "text-white font-semibold" : "text-gray-700"}`}>{item}</Text>
+          <Text
+            className={`${
+              selected === item ? "text-white font-semibold" : "text-gray-700"
+            }`}
+          >
+            {item}
+          </Text>
         </TouchableOpacity>
       )}
     />
   );
 
+  const renderStepIndicator = () => (
+    <View className="flex-row justify-center mb-6">
+      {[1, 2, 3].map((s) => (
+        <View
+          key={s}
+          className={`w-10 h-2 mx-1 rounded-full ${
+            s <= step ? "bg-emerald-600" : "bg-gray-300"
+          }`}
+        />
+      ))}
+    </View>
+  );
+
   return (
-    <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }} className="flex-1 bg-gray-50">
+    <View
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+      className="flex-1 bg-gray-50"
+    >
       <ScrollView className="p-5">
-        <Text className="text-2xl font-bold text-emerald-600 mb-6">Create Your Fitness Plan</Text>
+        <Text className="text-2xl font-bold text-emerald-600 mb-3">
+          Create Your Fitness Plan
+        </Text>
+        {renderStepIndicator()}
 
-        {/* Body Details */}
-        <View className="bg-white p-5 rounded-2xl shadow mb-5">
-          <Text className="text-gray-700 font-semibold mb-3">Body Details</Text>
-          <TextInput
-            placeholder="Weight (kg)"
-            keyboardType="numeric"
-            value={weight}
-            onChangeText={setWeight}
-            className="border border-gray-300 rounded-xl p-4 mb-3"
-          />
-          <TextInput
-            placeholder="Height (cm)"
-            keyboardType="numeric"
-            value={height}
-            onChangeText={setHeight}
-            className="border border-gray-300 rounded-xl p-4 mb-3"
-          />
-          {bmi && (
-            <Text className="text-gray-600 font-medium">
-              Your BMI: <Text className="font-bold">{bmi}</Text>
+        {step === 1 && (
+          <View className="bg-white p-5 rounded-2xl shadow mb-5">
+            <Text className="text-gray-700 font-semibold mb-3">
+              Step 1: Body Details
             </Text>
-          )}
-        </View>
 
-        {/* Goal */}
-        <View className="bg-white p-5 rounded-2xl shadow mb-5">
-          <Text className="text-gray-700 font-semibold mb-3">Fitness Goal</Text>
-          {renderOption(["Build Muscle", "Lose Fat", "Stay Fit"], goal, setGoal)}
-        </View>
+            <TextInput
+              placeholder="Weight (kg)"
+              keyboardType="numeric"
+              value={weight}
+              onChangeText={setWeight}
+              className="border border-gray-300 rounded-xl p-4 mb-3"
+            />
+            <TextInput
+              placeholder="Height (cm)"
+              keyboardType="numeric"
+              value={height}
+              onChangeText={setHeight}
+              className="border border-gray-300 rounded-xl p-4 mb-3"
+            />
 
-        {/* Equipment */}
-        <View className="bg-white p-5 rounded-2xl shadow mb-5">
-          <Text className="text-gray-700 font-semibold mb-3">Available Equipment</Text>
-          {renderOption(["Home (Bodyweight)", "Dumbbells", "Full Gym"], equipment, setEquipment)}
-        </View>
+            {bmi && (
+              <Text className="text-gray-600 font-medium">
+                Your BMI: <Text className="font-bold">{bmi}</Text>
+              </Text>
+            )}
 
-        {/* Generate Button */}
-        <TouchableOpacity
-          onPress={generatePlan}
-          className="bg-emerald-600 p-5 rounded-2xl mt-2 mb-8"
-        >
-          <Text className="text-center text-white font-semibold text-lg">Generate My Plan</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                calculateBMI();
+                if (weight && height) setStep(2);
+              }}
+              className="bg-emerald-600 p-4 rounded-2xl mt-5"
+            >
+              <Text className="text-center text-white font-semibold">
+                Next →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-        {/* Generated Plan */}
-        {isGenerated && (
+        {step === 2 && (
+          <View>
+            <View className="bg-white p-5 rounded-2xl shadow mb-5">
+              <Text className="text-gray-700 font-semibold mb-3">
+                Step 2: Fitness Goal
+              </Text>
+              {renderOption(["Build Muscle", "Lose Fat", "Stay Fit"], goal, setGoal)}
+            </View>
+
+            <View className="bg-white p-5 rounded-2xl shadow mb-5">
+              <Text className="text-gray-700 font-semibold mb-3">
+                Step 2: Available Equipment
+              </Text>
+              {renderOption(
+                ["Home (Bodyweight)", "Dumbbells", "Full Gym"],
+                equipment,
+                setEquipment
+              )}
+            </View>
+
+            <View className="flex-row justify-between mt-5">
+              <TouchableOpacity
+                onPress={() => setStep(1)}
+                className="bg-gray-300 p-4 rounded-2xl flex-1 mr-2"
+              >
+                <Text className="text-center text-gray-700 font-semibold">
+                  ← Back
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={generatePlan}
+                className="bg-emerald-600 p-4 rounded-2xl flex-1 ml-2"
+              >
+                <Text className="text-center text-white font-semibold">
+                  Generate Plan
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {step === 3 && isGenerated && (
           <View className="mb-8">
-            <Text className="text-xl font-semibold text-emerald-600 mb-4">Your Personalized Plan</Text>
+            <Text className="text-xl font-semibold text-emerald-600 mb-4">
+              Step 3: Your Personalized Plan
+            </Text>
             {existingPlan.map((day) => (
               <View
                 key={day.id}
@@ -120,6 +215,15 @@ export default function PlanScreen() {
                 ))}
               </View>
             ))}
+
+            <TouchableOpacity
+              onPress={() => setStep(1)}
+              className="bg-emerald-600 p-5 rounded-2xl mt-6"
+            >
+              <Text className="text-center text-white font-semibold text-lg">
+                Create New Plan
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
